@@ -1,0 +1,50 @@
+\documentclass{beamer}
+\usepackage{tikz}
+\usetikzlibrary{calc,through,qrr.trans,angles}
+\newenvironment{xcenter}
+ {\par\setbox0=\hbox\bgroup\ignorespaces}
+ {\unskip\egroup\noindent\makebox[\textwidth]{\box0}\par}
+\tikzset{
+ invisible/.style={opacity=0},
+ id/.style={visible on=<#1->},
+ visible on/.style={alt={#1{}{invisible}}},
+ alt/.code args={<#1>#2#3}{%
+   \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}}}
+\setbeamertemplate{navigation symbols}{}
+\def\info#1#2{\only<#1>{#1: #2}\ignorespaces}
+\begin{document}
+\begin{frame}\begin{xcenter}
+\begin{tikzpicture}[thick, line join=round, auto=right, scale=1,
+  declare function={a=7; b=8; c=6;}, label position=below, every circle node/.append style={draw, gray, thin}]
+\path(-1,0);
+\path[sloped] 
+  (0,0) coordinate[label={[overlay,font=\vphantom{$'$},id=1]$A\only<6->{=A'}\only<7->{=A''}$}] (A) node [id=2, overlay, circle through=++(right:b)] (AC) {}
+  node[invisible, overlay, circle through=(right:c)] {}
+  (A) edge[id=1] node {$c = \pgfmathprint{c}$} coordinate[at end, label=$B$] (B)++ (right:c) 
+  (B) node [id=2, overlay, circle through=++(right:a)] (BC) {}
+  (B) edge[id=3] node[near start] {$a = \pgfmathprint{a}$} coordinate[label={[font=\vphantom{$'$},overlay]above:{$C \only<7->{= B''}$}}, at end] (C)
+    (intersection cs: first node=AC, second node=BC, solution=2)
+  (C) edge[id=3] node {$b = \pgfmathprint{b}$} (A)
+     coordinate[label={[id=4]below right:$M$}] (M) at (barycentric cs:A=a,B=b,C=c)
+  (M) edge [id=4,to path={circle [radius=2pt]},thin] ()
+;
+\draw[overlay,dotted,id=5] (A) -- ($(A)!3!(M)$);
+\draw[dashed, m/.style={mirror=(M)}, id=6]
+  ([m] B) coordinate[label=above left:$B'$] (B') --
+  ([m] C) coordinate[label=$C'$] (C') -- (B);
+\pic[id=4, draw, ->, angle radius=.75cm, nodes={fill=white, inner sep=+1pt},pic text=$\alpha$] {angle=B--A--C};
+\pic[id=5, draw, ->, angle radius=1.3cm, angle eccentricity=1.3, pic text=$\alpha/2$] {angle=B--A--M};
+\draw[densely dotted, id=7] (C) -- (intersection of C--[shift={($(C')-(B')$)}]C and A--B)
+  coordinate[label=$C''$] (C'') -- (B);
+\node[overlay,align=center,anchor=north,font=\strut,text depth=+0pt,fill=white] at (6,-1) {
+  \info{1}{Draw first side}
+  \info{2}{Draw circles with length of other sides around $A$ and $B$}
+  \info{3}{Intersection is $C$}
+  \info{4}{Find ``Centroid'' $M$ of triangle via the \texttt{barycentric cs:}}
+  \info{5}{$\overline{AM}$ is the angle bisector of the angle at $A$, say $\alpha$}
+  \info{6}{Mirror $\triangle ABC$ at $\overline{AM}$, you get $\triangle A'C'B'$}
+  \info{7}{Find parallel to $\overline{B'C'}$ that goes through $C$\\(\texttt{shift} and \texttt{calc} is used for this)}
+};
+\end{tikzpicture}\end{xcenter}
+\end{frame}
+\end{document}
