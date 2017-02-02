@@ -1,0 +1,69 @@
+% This is made for http://tex.stackexchange.com/a/144186/16595
+% and used the formula from http://de.wikibooks.org/wiki/Algorithmensammlung:_Kalender:_Feiertage
+
+\def\pgfcalendar@Easter#1{%
+ \begingroup
+   \count0=#1\relax              % Yeah 0
+   \count1=\count0%              % K 1
+   \divide\count1 100            % K 1
+   \count2=\count1               % M 3
+   \multiply\count2 3
+   \advance\count2 3
+   \divide\count2 4              % 2 holds (3 * K +3) \ 4
+   \count3=\count1
+   \multiply\count3 8
+   \advance\count3 13
+   \divide\count3 -25
+   \advance\count3\count2
+   \advance\count3 15           % M 3
+   \count2-\count2              % S 2
+   \advance\count2 2
+   \count4=\count0              % A 4
+   \divide\count4 19
+   \multiply\count4 -19
+   \advance\count4\count0       % A 4
+   \count1=\count4              % D 1 *
+   \multiply\count1 19
+   \advance\count1\count3
+   \count5\count1
+   \divide\count1 30
+   \multiply\count1 -30
+   \advance\count1\count5       % D 1 *
+   \divide\count4 11            % R 4 *
+   \advance\count4\count1
+   \divide\count4 29            % R 4 *
+   \advance\count1-\count4      % OG 1 **
+   \advance\count1 21           % OG 1 **
+   \count3\count0               % SZ 3 *
+   \divide\count3 4
+   \advance\count3\count0
+   \advance\count3\count2
+   \count4-\count3
+   \divide\count3 7
+   \multiply\count3 7
+   \advance\count3\count4
+   \advance\count3 7           % SZ 3 *
+   \count4-\count3             % OE 4 **
+   \advance\count4\count1
+   \count3-\count4
+   \divide\count4 7
+   \multiply\count4 7
+   \advance\count4\count3
+   \advance\count4 7           % OE 4 **
+   \advance\count4\count1
+   \pgfcalendardatetojulian{\the\count0-03-\the\count4}\pgfutil@tempcnta
+   \expandafter\xdef\csname pgfcalendar@Easter@\the\count0\endcsname
+     {\the\pgfutil@tempcnta}%
+ \endgroup}
+\pgfqkeys{/pgf/calendar/Easter}{
+  .default=0,
+  .code={%
+      \expandafter\ifx\csname pgfcalendar@Easter@\pgfcalendarifdateyear\endcsname\relax
+        \pgfcalendar@Easter{\pgfcalendarifdateyear}%
+      \fi
+      \expandafter\pgfutil@tempcnta
+        \csname pgfcalendar@Easter@\pgfcalendarifdateyear\endcsname
+      \advance\pgfutil@tempcnta#1\relax
+      \ifnum\pgfcalendarifdatejulian=\pgfutil@tempcnta
+        \pgfcalendarmatchestrue
+      \fi}}
