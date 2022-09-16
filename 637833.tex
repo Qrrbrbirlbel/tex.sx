@@ -1,0 +1,51 @@
+\documentclass[tikz]{standalone}
+\newcommand*\charparserset{\pgfqkeys{/char parser}}
+\makeatletter
+\def\charparser@replacespace#1 #2\charparser@stop{#1\space#2}%
+\charparserset{
+  parse/.style={
+    /char parser/init,
+    /char parser/@replace spaces={#1}},
+  @replace spaces/.code=%
+    \pgfutil@in@{ }{#1}\ifpgfutil@in@
+      \expandafter\pgfutil@firstoftwo\else
+      \expandafter\pgfutil@secondoftwo\fi
+      {\pgfkeysalso{/char parser/@replace spaces/.expand once=%
+        {\charparser@replacespace#1\charparser@stop}}}
+      {\pgfkeysalso{/char parser/@parser={#1\charparser@stop}}},
+  @parser/.code 2 args=%
+    \pgfkeysalso{/char parser/do={#1},/char parser/next}%
+    \ifx\charparser@stop#2%
+      \expandafter\pgfutil@firstoftwo\else
+      \expandafter\pgfutil@secondoftwo\fi
+    {\pgfkeysalso{/char parser/final/.try}}
+    {\pgfkeysalso{/char parser/@parser={#2}}}}
+\makeatother
+\charparserset{
+  init/.code=\def\charparsercount{0},
+  next/.code=\edef\charparsercount{\the\numexpr\charparsercount+1\relax},
+  list/.style={
+    /char parser/final/.append code=\pgfkeysgetvalue{/char parser/@list}#1,
+    /char parser/@list/.initial=,
+    /char parser/do/.style={
+      /char parser/@list/.append={##1},
+      /char parser/do/.style={
+        /char parser/@list/.append={,####1}}}},
+  do/.code={#1}}
+\begin{document}
+\tikz[
+  x=5mm,
+  /char parser/do/.code={
+    \node[rotate=360*rnd] at (\charparsercount,0) {#1};
+  },
+  /char parser/parse={Hello World! äöüßÄÖÜ}
+]{}
+
+\tikz[
+  x=5mm,
+  /char parser/list=\myList,
+  /char parser/parse={Hello World! äöüßÄÖÜ}
+]
+\foreach \s[count=\n from 0] in \myList
+  \node[rotate=360*rnd] at (\n,0) {\s};
+\end{document}
