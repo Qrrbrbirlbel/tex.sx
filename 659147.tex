@@ -1,0 +1,82 @@
+% https://tex.stackexchange.com/q/659147/16595
+\documentclass{article}
+\usepackage{tikz, pgfplotstable}
+\usetikzlibrary{arrows.meta}
+\usepackage[utf8]{inputenc}
+
+% read in table
+\pgfplotstableread[col sep=comma]{
+label,startyear,endyear
+A, 2011, 2012
+B, 2016, 2018
+C, 2018, 2022
+}\authors
+
+\pgfplotstableread[col sep=comma]{
+label,startyear,endyear
+D, 2003, 2008
+E, 2008, 2011
+F, 2012, 2014
+G, 2013, -1
+}\events % 2017
+
+% add color columns
+\pgfplotstablecreatecol[create col/set={blue!30}]{color}{\authors}
+\pgfplotstablecreatecol[create col/set={red!30}]{color}{\events}
+
+% append events table to authors table
+\pgfplotstablevertcat{\authors}{\events}
+% sort by startyear
+\pgfplotstablesort[sort key=startyear]\sortedtable\authors
+
+\newcommand*\tdrc[2]{\pgfkeysvalueof{/tikz/data/row #1/col #2}}
+\newcommand*\tdrci[2]{\pgfkeysvalueof{/tikz/data/row #1/colindex #2}}
+\newcommand*\pgfplotsstoretableinpgfkeys[2]{%
+  \pgfplotstableforeachcolumn#1\as\col{%
+    \pgfplotstableforeachcolumnelement{\col}\of\sortedtable\as\cell{%
+      \pgfqkeys{#2}{%
+        row \pgfplotstablerow/col \col/.initial/.expand once=\cell,
+        row \pgfplotstablerow/colindex \pgfplotstablecol/%
+          .initial/.expand once=\cell}%
+      \let\pgfplotslastrow\pgfplotstablerow
+    }%
+  }%
+}
+\begin{document}
+\noindent\begin{tikzpicture}[x=7mm, y=-3mm]
+\pgfmathsetlengthmacro\barheight{2.5mm} % height of bars (on the canvas)
+% stores values in
+% /tikz/data/row <num>/col <name> (\tdrc{<rowindex>}{<name>})
+% and
+% /tikz/data/row <num>/col <index> (\tdrci{<rowindex>}{<colindex>})
+\pgfplotsstoretableinpgfkeys\sortedtable{/tikz/data}
+
+\foreach \row in {0,...,\pgfplotslastrow}{
+  \ifnum \tdrc{\row}{endyear}=-1
+    % single day entry, draw circle
+    \filldraw [draw=black!99!\tdrc{\row}{color}, fill=\tdrc{\row}{color}]
+        (\tdrc{\row}{startyear}-2000, \row) circle[radius=\barheight/2]
+      node[right=3pt, font=\scriptsize] {\tdrc{\row}{label}};
+  \else
+    % interval, draw a rectangle
+    \fill [\tdrc{\row}{color}]
+      ([shift=(up:\barheight/2)]\tdrc{\row}{startyear}-2000, \row)
+      rectangle
+      ([shift=(down:\barheight/2)]\tdrc{\row}{endyear}-2000, \row);
+     % add text label right of the rectangle
+    \node [right,font=\scriptsize]
+      at (\tdrc{\row}{endyear}-2000,\row) {\tdrc{\row}{label}};
+  \fi
+}
+
+\draw [Stealth-Stealth] (2003-2000,0)
+                     |- (2023-2000, \pgfplotslastrow+1);
+
+% add ticks on x-axis
+\foreach \year in {2003, 2004, ..., 2022}
+  \draw (\year-2000,\pgfplotslastrow+1) ++(0,3pt)
+     -- ++(0,-6pt) node[below] {\year};
+\show\barheight
+\draw (0,0) circle [radius=\barheight];
+\end{tikzpicture}
+\end{document}
