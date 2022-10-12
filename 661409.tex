@@ -1,0 +1,112 @@
+% arara: lualatex
+\documentclass[convert]{standalone}
+\usepackage{pgf,pgffor}
+\usepackage{jldiaz-poisson} % https://tex.stackexchange.com/a/185423/16595
+\usepackage{xcolor} % colorwheel
+\definecolor{cw0}{HTML}{9AFF00}\definecolor{cw1}{HTML}{FFA500}
+\definecolor{cw2}{HTML}{FF001A}\definecolor{cw3}{HTML}{FF00D9}
+\definecolor{cw4}{HTML}{6500FF}\definecolor{cw5}{HTML}{005AFF}
+\definecolor{cw6}{HTML}{00FFE5}\definecolor{cw7}{HTML}{00FF25}
+\pgfset{
+  declare function={
+    spiralAngle(\level,\spiral) = \directlua{tex.print(180/(\pgfkeysvalueof{/pgf/spiral\space N})*\level+360/(\pgfkeysvalueof{/pgf/spiral\space N})*\spiral)};
+    spiralRadius(\level)        = \directlua{tex.print(.707^\level*(\pgfkeysvalueof{/pgf/spiral\space radius}))};
+  },
+  spiral radius/.initial=5,
+  spiral N/.initial=8,
+  spiral buffer/.initial=+1pt
+}
+\newcommand*\pgfpointspiral[2]{% #1 = level, #2 = spiral
+  \pgfpointpolarxy{spiralAngle(#1,#2)}{spiralRadius(#1)}}
+\makeatletter
+\newcommand*\pgfpointspiralifdefined[3]{%
+  % if spiral-#2-#3 doesn't exist, define it
+  % if it does do nothing
+  \pgfutil@ifundefined{pgf@sh@ns@spiral-#2-#3}{%
+    \pgfcoordinate{spiral-#2-#3}{\pgfpointspiral{#2}{#3}}%
+  }{}% and make it an alias for #1
+  \pgfnodealias{#1}{spiral-#2-#3}}
+\makeatother
+\begin{document}
+\begin{pgfpicture}
+\def~#1{\pgfpointanchor{#1}{center}}
+\def\buffer#1#2{\pgfpointlineatdistance{\pgfkeysvalueof{/pgf/spiral buffer}}{#1}{#2}}
+\def\Buffer#1#2#3{\pgfpointlineattime{#1}{\buffer{#2}{#3}}{\buffer{#3}{#2}}}
+\pgfsetxvec{\pgfqpoint{5mm}{0mm}}
+\pgfsetyvec{\pgfqpoint{0mm}{5mm}}
+\foreach \l in {0,...,6}{
+  \foreach \n in {0,...,7}{
+    \pgfpointspiralifdefined{a}{\l}            {\n}
+    \pgfpointspiralifdefined{b}{\inteval{\l+1}}{\n}
+    \pgfpointspiralifdefined{c}{\l}            {\inteval{\n+1}}
+    \pgfpointspiralifdefined{d}{\inteval{\l-1}}{\inteval{\n+1}}
+    \pgfsetfillcolor{cw\n}
+    \foreach[expand list] \x/\y in {\poissonpointslist{1}{1}{.02+.0\l}{10}} {
+      \pgfpathcircle{
+        \Buffer{\y*\y*\y}
+          {\pgfpointlineattime{\x}{\buffer{~d}{~a}}{\buffer{~a}{~d}}}
+          {\pgfpointlineattime{\x}{\buffer{~c}{~b}}{\buffer{~b}{~c}}}
+      }{+.25pt}
+      \pgfusepath{fill}
+    }
+  }
+}
+\end{pgfpicture}
+\end{document}
+
+% arara: lualatex
+\documentclass{standalone}
+\usepackage{pgf,pgffor}
+\usepackage{jldiaz-poisson}
+\pgfset{
+  declare function={
+    spiralAngle(\level,\spiral) = \directlua{tex.print(180/(\pgfkeysvalueof{/pgf/spiral\space N})*\level+360/(\pgfkeysvalueof{/pgf/spiral\space N})*\spiral)};
+    spiralRadius(\level)        = \directlua{tex.print(.707^\level*(\pgfkeysvalueof{/pgf/spiral\space radius}))};
+    xSpread(\n)=\n^3*.8+.1;
+    ySpread(\n)=\n*.8+.1;
+  },
+  spiral radius/.initial=5,
+  spiral N/.initial=8}
+
+\newcommand*\pgfpointspiral[2]{% #1 = level, #2 = spiral
+  \pgfpointpolarxy{spiralAngle(#1,#2)}{spiralRadius(#1)}%
+}
+\makeatletter
+\newcommand*\pgfpointspiralifdefined[3]{%
+  \pgfutil@ifundefined{pgf@sh@ns@spiral-#2-#3}{%
+    \pgfcoordinate{spiral-#2-#3}{\pgfpointspiral{#2}{#3}}%
+  }{}%
+  \pgfnodealias{#1}{spiral-#2-#3}%
+}
+\makeatother
+\usepackage{xcolor}
+\definecolor{cw0}{HTML}{9AFF00}\definecolor{cw1}{HTML}{FFA500}
+\definecolor{cw2}{HTML}{FF001A}\definecolor{cw3}{HTML}{FF00D9}
+\definecolor{cw4}{HTML}{6500FF}\definecolor{cw5}{HTML}{005AFF}
+\definecolor{cw6}{HTML}{00FFE5}\definecolor{cw7}{HTML}{00FF25}
+\begin{document}
+\begin{pgfpicture}
+\pgfsetxvec{\pgfqpoint{5mm}{0mm}}
+\pgfsetyvec{\pgfqpoint{0mm}{5mm}}
+\foreach \l[evaluate={\dotSep=.02+.0\l;}] in {0,...,6}{
+  \foreach \n in {0,...,7} {
+    \pgfpointspiralifdefined{a}{\l}            {\n}
+    \pgfpointspiralifdefined{b}{\inteval{\l+1}}{\n}
+    \pgfpointspiralifdefined{c}{\l}            {\inteval{\n+1}}
+    \pgfpointspiralifdefined{d}{\inteval{\l-1}}{\inteval{\n+1}}
+    \pgfsetfillcolor{cw\n}
+    \foreach[expand list, evaluate={\xSpread=xSpread(\x);}]
+      \x/\y in {\poissonpointslist{1}{1}{\dotSep}{10}} {
+        \pgfpathcircle{
+          \pgfpointlineattime{ySpread(\y)}{
+            \pgfpointlineattime{\xSpread}{\pgfpointanchor{a}{center}}{\pgfpointanchor{b}{center}}
+          }{
+            \pgfpointlineattime{\xSpread}{\pgfpointanchor{d}{center}}{\pgfpointanchor{c}{center}}
+          }
+        }{+.25pt}
+        \pgfusepath{fill}
+    }
+  }
+}
+\end{pgfpicture}
+\end{document}
