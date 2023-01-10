@@ -1,0 +1,61 @@
+\documentclass[varwidth]{standalone}
+\usepackage{tikz-cd}
+\makeatletter
+\pgfset{% independent of TikZ
+  rev/.style={
+    /pgf/reverse tips,
+    /pgf/reverse shorten},
+  reverse tips/.code=%
+    \let\pgf@arrow@tip@sequence\pgf@end@tip@sequence
+    \let\pgf@end@tip@sequence\pgf@start@tip@sequence
+    \let\pgf@start@tip@sequence\pgf@arrow@tip@sequence,
+  reverse shorten/.code=
+    \pgfutil@tempdima\pgf@shorten@start@additional
+    \pgf@shorten@start@additional\pgf@shorten@end@additional
+    \pgf@shorten@end@additional\pgfutil@tempdima}
+\makeatother
+\tikzset{edges/.style={every edge/.append style={#1}}}
+\tikzcdset{
+  diagrams={>={Straight Barb[scale=0.5]}},
+  stack distance/.initial=+.38ex,
+  every stack/.code=, % no-op
+  stacks/.style={/tikz/commutative diagrams/every stack/.append style={#1}},
+  stack/do path/.style={% could be used to change the path after shifting
+    /tikz/insert path/.expanded={(\tikztostart)edge(\tikztotarget)}},
+  stack/every even/.style={/pgf/rev},
+  stack/.style={
+    /tikz/to path={foreach \stackArrow in {1,...,#1}{[
+      commutative diagrams/shift left/.default=%
+        \pgfkeysvalueof{/tikz/commutative diagrams/stack distance},
+      commutative diagrams/shift left={\pgfinteval{\stackArrow-(#1)/2}},
+      line to,
+      commutative diagrams/every stack,
+      commutative diagrams/stack/every \ifodd\stackArrow odd\else even\fi/.try,
+      commutative diagrams/stack/do path]}}}}
+\begin{document}
+Consider the simplicial set~\( X_{\bullet} \) given by
+\[\begin{tikzcd}[
+  arrows=->,
+  stacks={shorten <=5\pgflinewidth}
+] \cdots \ar[stack=9, r]
+& X_3    \ar[stack=7, r, stacks=rev] % sorry, rev needs to be inside stacks
+& X_2    \ar[stack=5, r]
+& X_1    \ar[stack=3, r]
+& X_0
+\end{tikzcd}\]
+
+\[\begin{tikzcd}[
+  arrows=->, stacks={shorten <=5\pgflinewidth},
+  stack/every odd/.append style={edges=red},
+  stack/every even/.append style={edges=green}
+] \cdots \ar[stack=9, r, ->.>>, stacks={shorten <=15\pgflinewidth}]
+& X_3    \ar[stack=7, r]
+& X_2    \ar[stack=5, d, stacks=bend right, stack distance=+.5ex]
+         \ar[stack=3, d, stacks=bend left, stack distance=+.5ex,
+           stack/every odd/.append style={edges=blue},
+           stack/every even/.append style={edges=orange}]\\
+&
+& X_1    \ar[stack=3, r]
+& X_0
+\end{tikzcd}\]
+\end{document}
