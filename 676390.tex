@@ -51,22 +51,26 @@
     ] \i in {0, ..., \pgfinteval{#4-1}}
       \pgfkeyssetevalue{/tikz/shape \TYPE/value}
         {\pgfinteval{\pgfkeysvalueof{/tikz/shape \TYPE/value}-1}}
-      \node[#2 \TYPE] at ({xPos(\i)},{yPos(\i)}){};
+      \node[#2 \TYPE]{};
   \endgroup}
+\usetikzlibrary{chains}
 \begin{document}
 \begin{tikzpicture}[
-  declare function={
-    xPos(\n) = mod(\n,10);
-    yPos(\n) = int(\n/10);},
+  square grid/.style={at={({mod(\tikzchaincount-1,#1)},
+                           {int((\tikzchaincount-1)/#1)})}},
   x=.775cm, y=.775cm, nodes=draw]
 \matrix[column sep=10mm, path only]{
 \tikzplacerandom[
+  start chain=placed {square grid=10},
+  nodes=on chain,
   shape 0/.style={shape=circle,  fill=red},
   shape 1/.style={shape=diamond, fill=red},
   shape 2/.style={shape=circle},
 ]{shape}{{random(10,50)}, {random(10,50)}}{100}
 &
 \tikzplacerandom[
+  start chain=placed {square grid=10},
+  nodes=on chain,
   shape 0/.style={shape=circle,          fill=red},
   shape 1/.style={shape=diamond,         fill=blue},
   shape 2/.style={shape=trapezium,       fill=yellow},
