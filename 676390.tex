@@ -1,0 +1,78 @@
+% Generalization of https://tex.stackexchange.com/a/676461/16595 by Juan Castaño
+\documentclass[tikz]{standalone}
+\usetikzlibrary{shapes.geometric}
+\makeatletter
+\pgfqkeys{/pgf/foreach}{
+  remember key/.style 2 args={#1/.initial/.evaluated={#2},
+                              remember/.expand twice=\pgfkeysvalueof{#1}},
+  remember keys/.style n args={3}{%
+    /utils/exec=\def\pgfmathcounter{-1},
+    /utils/temp/.style={
+      /utils/exec=\edef\pgfmathcounter{\pgfinteval{\pgfmathcounter+1}},
+      remember key={#1\pgfmathcounter#2}{##1}},
+    /utils/temp/.list={#3}}}
+\pgfmathdeclarefunction{choose}{...}{%
+  \begingroup
+    \pgfmath@choose#1\pgfmath@parse@stop\pgfmath@
+    \pgfmath@smuggleone\pgfmathresult
+  \endgroup}
+\newcommand*\pgfmath@choose[1]{%
+  \pgfmathint@{#1}%
+  \pgfmath@tempcnta=\pgfmathresult
+  \pgfmath@tempcntb=0
+  \pgfmath@@choose}
+\newcommand*\pgfmath@@choose[1]{%
+  \def\pgfmath@temp{#1}%
+  \ifx\pgfmath@temp\pgfmath@parse@stop
+    \edef\pgfmathresult{\the\pgfmath@tempcntb}%
+    \let\pgfmath@parse@next\pgfmath@gobbleone
+  \else
+    \pgfmathint@{#1}\ifnum\pgfmathresult<\pgfmath@tempcnta
+      \advance\pgfmath@tempcnta by -\pgfmathresult
+      \advance\pgfmath@tempcntb by 1
+      \let\pgfmath@parse@next\pgfmath@@choose
+    \else
+      \edef\pgfmathresult{\the\pgfmath@tempcntb}%
+      \let\pgfmath@parse@next\pgfmath@gobbletilpgfmath@
+    \fi
+  \fi \pgfmath@parse@next}
+\newcommand*\pgfmathchooser[4]{%
+  \ifnum#1>0 \expandafter\pgfmathchooser\expandafter
+    {\the\numexpr#1-1 }{#2}{#3}{#4}\fi#4\pgfkeysvalueof{#2#1#3}}
+\newcommand*\tikzplacerandom[4][]{%
+  \begingroup
+    \foreach[/tikz/.cd,#1][
+      remember keys={/tikz/#2 }{/value}{#3},
+      /tikz/shape \pgfinteval{\pgfmathcounter+1}/value/.initial/.evaluated=%
+        {#4\pgfmathchooser{\pgfmathcounter}{/tikz/#2 }{/value}{-}},
+      evaluate/.expanded=\noexpand\i as \noexpand\TYPE using {%
+        choose(random(1,#4-\noexpand\i)\noexpand\pgfmathchooser
+        {\pgfmathcounter}{/tikz/#2 }{/value}{,})},
+    ] \i in {0, ..., \pgfinteval{#4-1}}
+      \pgfkeyssetevalue{/tikz/shape \TYPE/value}
+        {\pgfinteval{\pgfkeysvalueof{/tikz/shape \TYPE/value}-1}}
+      \node[#2 \TYPE] at ({xPos(\i)},{yPos(\i)}){};
+  \endgroup}
+\begin{document}
+\begin{tikzpicture}[
+  declare function={
+    xPos(\n) = mod(\n,10);
+    yPos(\n) = int(\n/10);},
+  x=.775cm, y=.775cm, nodes=draw]
+\matrix[column sep=10mm, path only]{
+\tikzplacerandom[
+  shape 0/.style={shape=circle,  fill=red},
+  shape 1/.style={shape=diamond, fill=red},
+  shape 2/.style={shape=circle},
+]{shape}{{random(10,50)}, {random(10,50)}}{100}
+&
+\tikzplacerandom[
+  shape 0/.style={shape=circle,          fill=red},
+  shape 1/.style={shape=diamond,         fill=blue},
+  shape 2/.style={shape=trapezium,       fill=yellow},
+  shape 3/.style={shape=regular polygon, fill=green},
+  shape 4/.style={shape=coordinate}
+]{shape}{{random(10,20)}, {random(10,20)}, 10, {random(10,30)}}{100}
+\\};
+\end{tikzpicture}
+\end{document}
