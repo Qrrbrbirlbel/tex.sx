@@ -48,8 +48,8 @@
       evaluate/.expanded=\noexpand\i as \noexpand\TYPE using {%
         choose(random(1,#4-\noexpand\i+1)\noexpand\pgfmathchooser
         {\pgfmathcounter}{/tikz/#2 }{/value}{,})}] \i in {1, ..., #4}
-      \pgfkeyssetevalue{/tikz/shape \TYPE/value}
-        {\pgfinteval{\pgfkeysvalueof{/tikz/shape \TYPE/value}-1}}
+      \pgfkeyssetevalue{/tikz/#2 \TYPE/value}
+        {\pgfinteval{\pgfkeysvalueof{/tikz/#2 \TYPE/value}-1}}
       \node[#2 \TYPE]{};
   \endgroup}
 \begin{document}
