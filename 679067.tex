@@ -1,0 +1,14 @@
+\documentclass{article}
+\makeatletter
+\newcommand*\printlist[2][;]{%
+  \printlist@{#1}#2,\relax}
+\def\printlist@#1#2,#3{%
+  #2\ifx#3\relax\expandafter\@gobble    \else
+                \expandafter\@firstofone\fi
+  {#1\printlist@{#1}#3}}
+\makeatother
+\author{\printlist[,\\]{abc,def,ghi,jkl}}
+\title{Test}
+\begin{document}
+\maketitle
+\end{document}
